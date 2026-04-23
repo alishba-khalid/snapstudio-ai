@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+python-multipart
+rembg
+Pillow
+opencv-python
+numpy
+boto3
+pydantic
+pydantic-settings
+httpx
+aiofiles
+redis

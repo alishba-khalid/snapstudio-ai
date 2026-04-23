@@ -1,0 +1,8 @@
+{
+  "name": "@snapstudio/ai-worker",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": ".\\venv\\Scripts\\uvicorn src.main:app --reload --port 8000"
+  }
+}
