@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Github, Mail, Sparkles, Lock } from 'lucide-react';
+import { Globe, Mail, Sparkles, Lock } from 'lucide-react';
 
 export default function RegisterPage() {
   return (
