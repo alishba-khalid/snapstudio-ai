@@ -1,5 +1,3 @@
-import { falClient } from "./fal";
-
 export type StylePreset = {
   name: string;
   prompt: string;
@@ -46,52 +44,19 @@ export const STYLE_PRESETS: Record<string, StylePreset> = {
 };
 
 export async function removeBackground(imageUrl: string) {
-  const useInternal = process.env.NEXT_PUBLIC_USE_INTERNAL_AI === "true";
-  const workerUrl = process.env.NEXT_PUBLIC_AI_WORKER_URL || "http://localhost:8000";
-
-  if (useInternal) {
-    console.log("🚀 SnapStudio: Using Internal AI Worker (rembg)...");
-    try {
-      const response = await fetch(`${workerUrl}/remove-bg`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ image_url: imageUrl }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Internal worker responded with ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log("✅ SnapStudio: Internal background removal successful");
-      return data.image_base64;
-    } catch (error) {
-      console.error("⚠️ SnapStudio: Internal AI Worker failed. Falling back to Fal.ai...", error);
-      // Fall through to Fal.ai
-    }
-  }
-
-  const hasFalKey = process.env.FAL_KEY && process.env.FAL_KEY !== 'fake_key_for_testing' && process.env.FAL_KEY !== 'your-fal-key-here';
-  const shouldSimulate = process.env.NEXT_PUBLIC_SIMULATE_AI === 'true' || !hasFalKey;
-  
-  if (shouldSimulate) {
-    console.log("🧪 SnapStudio: Simulating background removal...");
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    // Return a transparent PNG placeholder (base64) or a dummy URL
-    // For demo, let's return the original image but log that it's a simulation
-    return imageUrl; 
-  }
-
-  console.log("🌐 SnapStudio: Using Fal.ai External API...");
-  const result = await falClient.subscribe("fal-ai/fast-remove-bg", {
-    input: {
-      image_url: imageUrl,
-    },
+  const res = await fetch("/api/fal/generate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      imageUrl,
+      style: "Background removal",
+      preset: STYLE_PRESETS["Background removal"],
+    }),
   });
-  console.log("✅ SnapStudio: Fal.ai background removal successful");
-  return result.data.image.url;
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error);
+  return data.imageUrl;
 }
 
 export async function generateLifestyle(imageUrl: string, style: string) {
@@ -102,35 +67,13 @@ export async function generateLifestyle(imageUrl: string, style: string) {
     return removeBackground(imageUrl);
   }
 
-  // Check if we have a valid Fal.ai key
-  const hasFalKey = process.env.FAL_KEY && process.env.FAL_KEY !== 'fake_key_for_testing' && process.env.FAL_KEY !== 'your-fal-key-here';
-  const shouldSimulate = process.env.NEXT_PUBLIC_SIMULATE_AI === 'true' || !hasFalKey;
-  
-  if (shouldSimulate) {
-    console.log(`🧪 SnapStudio: Simulating ${style} generation...`);
-    // Return a beautiful themed placeholder based on style
-    const placeholders: Record<string, string> = {
-      "Studio White": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=80&w=1000",
-      "Nordic Minimal": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&q=80&w=1000",
-      "Neon Galactic": "https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&q=80&w=1000",
-      "Golden Hour": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&q=80&w=1000",
-      "Botanical Zen": "https://images.unsplash.com/photo-1572635196237-14b3f281503f?auto=format&fit=crop&q=80&w=1000",
-      "Industrial Raw": "https://images.unsplash.com/photo-1585333120167-081824d74551?auto=format&fit=crop&q=80&w=1000"
-    };
-    
-    // Artificial delay for realism
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    return placeholders[style] || placeholders["Studio White"];
-  }
-
-  console.log(`🌐 SnapStudio: Generating ${style} with Fal.ai...`);
-  const result = await falClient.subscribe(preset.model, {
-    input: {
-      image_url: imageUrl,
-      prompt: preset.prompt,
-      sync_mode: true,
-    },
+  const res = await fetch("/api/fal/generate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ imageUrl, style, preset }),
   });
-  
-  return result.data.images[0].url;
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error);
+  return data.imageUrl;
 }
