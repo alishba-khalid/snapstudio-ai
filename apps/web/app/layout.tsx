@@ -1,11 +1,13 @@
-import { Outfit } from 'next/font/google';
+import { Outfit, Noto_Nastaliq_Urdu, Noto_Sans_Arabic } from 'next/font/google';
 import './globals.css';
 import type { Metadata } from 'next';
 
 const outfit = Outfit({ subsets: ['latin'], variable: '--font-outfit' });
+const urduFont = Noto_Nastaliq_Urdu({ subsets: ['arabic'], variable: '--font-urdu' });
+const arabicFont = Noto_Sans_Arabic({ subsets: ['arabic'], variable: '--font-arabic' });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://snapstudio.ai'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://snapstudio-ai.vercel.app'),
   title: {
     default: 'SnapStudio AI — Professional Product Photography for eCommerce',
     template: '%s | SnapStudio AI',
@@ -54,11 +56,15 @@ export const metadata: Metadata = {
   },
 };
 
+import { I18nProvider } from '@/lib/i18n';
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={outfit.variable}>
-      <body className="antialiased bg-background text-white selection:bg-brand-violet/30 selection:text-brand-violet">
-        {children}
+    <html lang="en">
+      <body className={`${outfit.variable} ${urduFont.variable} ${arabicFont.variable} antialiased bg-background text-white selection:bg-brand-violet/30 selection:text-brand-violet`}>
+        <I18nProvider>
+          {children}
+        </I18nProvider>
       </body>
     </html>
   );
